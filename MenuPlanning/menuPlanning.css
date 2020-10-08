@@ -27,6 +27,8 @@ input[type=text]
     padding: 0;
     border: 1px solid #888;
     position: absolute;
+    min-width: 100px;
+    min-height: 100px;
     top: 50%;
     left: 50%;
     -ms-transform: translate(-50%, -50%);
@@ -36,13 +38,18 @@ input[type=text]
   /* Modal top bar */
   .modal-top{
     background-color: #cccccc;
-    padding: 5px;
     width: 100%;
+  }
+
+  .modal-bottom{
+    padding: 5px;
   }
 
   .modal-close{
       color: #333333;
       float: right;
+      margin-top: -6px;
+      overflow: hidden;
       font-size: 28px;
       font-weight: bold;
   }

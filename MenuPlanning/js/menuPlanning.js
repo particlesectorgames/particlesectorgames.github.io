@@ -47,7 +47,7 @@ function OnResetStorageClick()
 
 function GetLongTerm(key)
 {
-    return longTermStorage[key] ? longTermStorage.getItem[key] : "";
+    return longTermStorage[key] ? longTermStorage[key] : "";
 }
 
 function GetShortTerm(key)
@@ -83,19 +83,33 @@ class Popup
 {
     constructor()
     {
-        this.modal = document.getElementById("popup");
-        this.modal.onclick = function() { popup.Close(); }
-        this.closeBtn = document.getElementById("popup-close");
-        this.closeBtn.onclick = function() { popup.Close(); }
+        window.onkeydown = function(event) 
+        { 
+            if(event.key === "Escape") 
+            {
+                popup.Close();
+            } 
+        }
+        this.GetCloseBtn().onclick = function() { popup.Close(); }
+    }
+
+    GetModal()
+    {
+        return document.getElementById("popup");
+    }
+
+    GetCloseBtn()
+    {
+        return this.GetModal().getElementsByClassName("modal-close")[0];
     }
 
     Close()
     {
-        this.modal.style.display = "none";
+        popup.GetModal().style.display = "none";
     }
 
     Show()
     {
-        this.modal.style.display = "block";
+        popup.GetModal().style.display = "block";
     }
 }
