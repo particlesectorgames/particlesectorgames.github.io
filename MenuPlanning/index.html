@@ -5,8 +5,21 @@
 	<link rel="stylesheet" href="menuPlanning.css">
 </head>
 <body onload="Initialize()">
+	<!-- Model dialog -->
+	<div id="popup" class="modal">
+		<div class="modal-content">
+			<span class="model-top">
+				<label class="model-top-label">Dialog</label>
+				<span id="popup-close" class="modal-close">&times;</span>
+			</span>
+			<span class="model-bottom">
+				<label>dialog info</label>
+			</span>
+		</div>
+	</div>
 	<button style="position: absolute; right: 5px; top: 5px" onclick="OnResetStorageClick()">Reset Storage</button>
 	<label for="inputName">Name</label><input type="text" id="inputName" name="name" placeholder="Your name. ." onchange="OnInputNameChange()"/>
 	<label for="inputMenuName">Menu Name</label><input type="text" id="inputMenuName" name="menuName" placeholder="Menu name. ." onchange="OnInputMenuNameChange()"/>
+	<button style="position: absolute; left: 5px; bottom: 5px" onclick="popup.Show()">Test modal</button>
 </body>
 </html>

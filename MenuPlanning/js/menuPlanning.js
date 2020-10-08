@@ -4,6 +4,7 @@ let longTermStorage = {};
 let shortTermStorage = {};
 
 let bStorageSupported = false;
+let popup;
 
 function Initialize()
 {
@@ -23,6 +24,7 @@ function Initialize()
     }
     SetInputName();
     SetInputMenuName();
+    popup = new Popup();
 }
 
 function SaveStorage()
@@ -75,4 +77,25 @@ function OnInputMenuNameChange()
     let menuName = document.getElementById("inputMenuName").value;
     shortTermStorage.MenuName = menuName;
     SaveStorage();
+}
+
+class Popup
+{
+    constructor()
+    {
+        this.modal = document.getElementById("popup");
+        this.modal.onclick = function() { popup.Close(); }
+        this.closeBtn = document.getElementById("popup-close");
+        this.closeBtn.onclick = function() { popup.Close(); }
+    }
+
+    Close()
+    {
+        this.modal.style.display = "none";
+    }
+
+    Show()
+    {
+        this.modal.style.display = "block";
+    }
 }
