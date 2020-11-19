@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>STL Editor app</title>
+		<style>
+			html, body { margin: 0; padding: 0; }
+            body {
+                height: 100vh;
+                width: 100vw;
+            }
+            #topbar{
+                position: fixed;
+                width: 100%;
+                overflow: show;
+                background-color: #AAA;
+                font-family: Arial;
+            }
+            #bottombar{
+                position: fixed;
+                bottom: 0;
+                width: 100%;
+                overflow: show;
+                background-color: #AAA;
+                font-family: Arial;
+                font-size: 16px;
+                display: flex;
+            }
+            #bottombar .group{
+                display:flex;
+                margin: 5px 20px;
+            }
+            .dropbtn{
+                background-color: #AAA;
+                color: white;
+                padding: 5px 20px;
+                font-size: 16px;
+                border: none;
+                cursor: pointer;
+                outline: none;
+            }
+            .dropbtn:hover, .dropbtn:focus{
+                background-color: #CCC;
+            }
+            .dropdown{
+                position: relative;
+                display: inline-block;
+            }
+            .dropdown-content {
+                display: none;
+                position: absolute;
+                background-color: #f1f1f1;
+                min-width: 160px;
+                overflow: auto;
+                box-shadow: 0px 5px 5px 0px rgba(0,0,0,0.2);
+                z-index: -1;
+            }
+            .dropdown-content div {
+                color: black;
+                padding: 5px 20px;
+                text-decoration: none;
+                display: block;
+            }
+            .dropdown-item{
+                cursor: pointer;
+            }
+            .show {display: block;}
+            #topbar a:hover, .dropdown:hover{
+                background-color: #888;
+            }
+            #view{
+                height: 100%;
+                width: 100%;
+            }
+		</style>
+	</head>
+	<body onload="init()">
+            <div id="topbar">
+                <div class="dropdown">
+                    <button class="dropbtn" onclick="onFileButtonClick()">File</button>
+                    <div class="dropdown-content" id="fileDropdown">
+                        <div class="dropdown-item">Save</div>
+                        <div class="dropdown-item">Close</div>
+                    </div>
+                </div>
+                <div class="dropdown">
+                    <button class="dropbtn" onclick="onShadingModeButtonClick()">Shading Mode</button>
+                    <div class="dropdown-content" id="shadingModeDropdown">
+                        <div class="dropdown-item" onclick="onShadedClick()">Shaded</div>
+                        <div class="dropdown-item" onclick="onWireframeClick()">Wireframe</div>
+                        <div class="dropdown-item" onclick="onBothClick()">Shaded and Wireframe</div>
+                    </div>
+                </div>
+            </div>
+            <div id="view" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+            <div id="bottombar">
+                <div class="group">
+                    <div>Vertices: </div><div id="vertexCount">0</div>
+                </div>
+                <div class="group">
+                    <div>Triangles: </div><div id="triangleCount">0</div>
+                </div>
+            </div>
+        <script src="js/three.min.js"></script>
+        <script src="js/OrbitControls.js"></script>
+        <script src="js/STLLoader.min.js"></script>
+		<script>
+
+            let renderer, scene, camera, grid, group, controls, shadedMesh, wireframeMesh;
+            let topbar, view;
+
+            function viewWidth()
+            {
+                return view.offsetWidth;
+            }
+
+            function viewHeight()
+            {
+                return view.offsetHeight;
+            }
+
+            function init()
+            {
+                topbar = document.getElementById('topbar');
+                view = document.getElementById('view');
+
+                scene = new THREE.Scene();
+                scene.background = new THREE.Color(0xeeeeee);
+
+                camera = new THREE.PerspectiveCamera( 50, viewWidth()/viewHeight(), 0.1, 1000 );
+                camera.position.set(0, 100, 150);
+                camera.lookAt(0,0,0);
+
+                let directionalLight = new THREE.DirectionalLight(0xffffff, 0.7);
+                directionalLight.position.set(0.75, 0.75, 1.0).normalize();
+                scene.add(directionalLight);
+
+                let ambientLight = new THREE.AmbientLight( 0xffffff, 0.3 );
+				scene.add( ambientLight );
+
+                group = new THREE.Group();
+                scene.add(group);
+
+                grid = new THREE.GridHelper( 150, 30 );
+                group.add(grid);
+
+                let geometry = new THREE.BoxGeometry();
+			    let material = new THREE.MeshBasicMaterial( { color: 0x00ff00 } );
+			    let cube = new THREE.Mesh( geometry, material );
+                group.add(cube);
+                
+                renderer = new THREE.WebGLRenderer( { antialias: true } );
+                renderer.setClearColor( 0xffffff);
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.setSize(viewWidth(), viewHeight());
+				view.appendChild( renderer.domElement );
+
+                controls = new THREE.OrbitControls( camera, renderer.domElement );
+				controls.minDistance = 1;
+                controls.maxDistance = 300;
+                controls.enableDamping = true;
+
+                window.addEventListener( 'resize', onWindowResize);
+                animate();
+            }
+
+            function initGroup()
+            {
+                group.children = [];
+                group.add(grid);
+            }
+
+			function onWindowResize() 
+            {
+                camera.aspect = viewWidth() / viewHeight();
+                camera.updateProjectionMatrix();
+                renderer.setSize( viewWidth(), viewHeight());
+            }
+
+            function animate() 
+            {
+                requestAnimationFrame( animate );
+                
+                // do any movment here
+                controls.update();
+                renderer.render( scene, camera );
+            }
+
+            function loadSTL(file)
+            {
+                console.log('... file = ' + file.name);
+                let loader = new THREE.STLLoader();
+                loader.load(file, function(geometry)
+                {
+                    let material = new THREE.MeshPhongMaterial( { color: 0xffffff,
+                                                                  flatShading: true,
+                                                                  vertexColors: false,
+                                                                  shininess: 0 } );
+                                                                  if(geometry.hasColors)
+                    {
+                        material.opacity = geometry.alpha;
+                        material.vertexColors = THREE.VertexColors;
+                    }
+                    let wireframeMaterial = new THREE.MeshBasicMaterial( { color: 0x000000, wireframe: true, transparent: true } );
+                    
+                    geometry.computeBoundingBox();
+                    let center = new THREE.Vector3(); 
+                    geometry.boundingBox.getCenter(center);
+                    
+                    //console.log('Min: ', geometry.boundingBox.min);
+                    //console.log('Cen: ', center);
+                    //console.log('Max: ', geometry.boundingBox.max);
+
+                    shadedMesh = new THREE.Mesh(geometry, material);
+                    shadedMesh.rotation.x = -Math.PI / 2;
+                    shadedMesh.position.x -= center.x;
+                    shadedMesh.position.z += center.y;
+                    shadedMesh.position.y -= geometry.boundingBox.min.z;
+                    wireframeMesh = new THREE.Mesh(geometry, wireframeMaterial);
+                    wireframeMesh.rotation.x = -Math.PI / 2;
+                    wireframeMesh.position.x -= center.x;
+                    wireframeMesh.position.z += center.y;
+                    wireframeMesh.position.y -= geometry.boundingBox.min.z;
+
+                    initGroup();
+                    group.add(shadedMesh);
+                    group.add(wireframeMesh);
+                    wireframeMesh.visible = false;
+                    SetVertices(geometry.attributes.position.count);
+                    SetTriangles(geometry.attributes.position.count / 3.0);
+                },
+                function(error)
+                {
+                    console.log(error.message);
+                } );
+            }
+
+            function onShadedClick()
+            {
+                if(shadedMesh != null)
+                {
+                    shadedMesh.visible = true;
+                }
+                if(wireframeMesh != null)
+                {
+                    wireframeMesh.visible = false;
+                }
+            }
+
+            function onWireframeClick()
+            {
+                if(wireframeMesh != null)
+                {
+                    wireframeMesh.visible = true;
+                }
+                if(shadedMesh != null)
+                {
+                    shadedMesh.visible = false;
+                }
+            }
+
+            function onBothClick()
+            {
+                if(wireframeMesh != null)
+                {
+                    wireframeMesh.visible = true;
+                }
+                if(shadedMesh != null)
+                {
+                    shadedMesh.visible = true;
+                }
+            }
+
+            function SetVertices(val)
+            {
+                document.getElementById('vertexCount').innerHTML = val;
+            }
+
+            function SetTriangles(val)
+            {
+                document.getElementById('triangleCount').innerHTML = val;
+            }
+
+            function drop(event)
+            {
+                console.log('File dropped');
+                event.preventDefault();
+                
+                if(event.dataTransfer.files.length != 1)
+                {
+                    console.log('Please load one file at a time');
+                }
+                else
+                {
+                    let file = event.dataTransfer.files[0];
+                    loadSTL(file);
+                }
+            }
+
+            function allowDrop(event)
+            {
+                event.preventDefault();
+            }
+
+            let lastActiveMenuItem;
+
+            function onFileButtonClick()
+            {
+                let dropdownElement = document.getElementById("fileDropdown");
+                if(!dropdownElement.classList.contains('show'))
+                { 
+                    closeAllMenues();
+                }
+                lastActiveMenuItem = document.activeElement;
+                dropdownElement.classList.toggle("show");
+            }
+                
+
+            function onShadingModeButtonClick()
+            {
+                let dropdownElement = document.getElementById("shadingModeDropdown");
+                if(!dropdownElement.classList.contains('show'))
+                { 
+                    closeAllMenues();
+                }
+                lastActiveMenuItem = document.activeElement;
+                dropdownElement.classList.toggle("show");
+            }
+
+            function closeAllMenues()
+            {
+                let dropdowns = document.getElementsByClassName("dropdown-content");
+                let i;
+                for (i = 0; i < dropdowns.length; i++) {
+                    let openDropdown = dropdowns[i];
+                    if (openDropdown.classList.contains('show')) {
+                        openDropdown.classList.remove('show');
+                    }
+                }
+            }
+
+            // Close the dropdown if the user clicks outside of it
+            window.onclick = function(event) {
+                if (!event.target.matches('.dropbtn') || event.target != lastActiveMenuItem ) {
+                    closeAllMenues();
+                }
+            }
+
+
+		</script>
+	</body>
+</html>
